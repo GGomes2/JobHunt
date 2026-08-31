@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { Logo } from "@/components/layout/Logo";
+import { getSafeAuthRedirectPath } from "@/lib/auth-redirects";
 import { getCurrentUser } from "@/lib/insforge-server";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 type LoginPageProps = {
   searchParams: Promise<{
     error?: string;
+    next?: string;
   }>;
 };
 
@@ -20,13 +22,13 @@ const errorMessages: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: LoginPageProps): Promise<ReactElement> {
+  const { error, next } = await searchParams;
+  const nextPath = getSafeAuthRedirectPath(next);
   const user = await getCurrentUser();
 
   if (user) {
-    redirect("/dashboard");
+    redirect(nextPath);
   }
-
-  const { error } = await searchParams;
 
   return (
     <main className="flex min-h-screen bg-background px-6 py-10">
@@ -42,7 +44,10 @@ export default async function LoginPage({
           </p>
         </section>
 
-        <LoginForm initialError={error ? errorMessages[error] : undefined} />
+        <LoginForm
+          initialError={error ? errorMessages[error] : undefined}
+          nextPath={nextPath}
+        />
       </div>
     </main>
   );

@@ -14,7 +14,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   if (!accessToken) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", request.nextUrl.pathname);
+    loginUrl.searchParams.set(
+      "next",
+      `${request.nextUrl.pathname}${request.nextUrl.search}`,
+    );
 
     const redirectResponse = NextResponse.redirect(loginUrl);
     clearAuthCookies(redirectResponse.cookies);

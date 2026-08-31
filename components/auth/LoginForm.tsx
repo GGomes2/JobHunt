@@ -10,11 +10,15 @@ import { LoaderCircle } from "lucide-react";
 
 type LoginFormProps = {
   initialError?: string;
+  nextPath: string;
 };
 
 const initialState: OAuthActionState = {};
 
-export function LoginForm({ initialError }: LoginFormProps): ReactElement {
+export function LoginForm({
+  initialError,
+  nextPath,
+}: LoginFormProps): ReactElement {
   const [googleState, googleAction, isGooglePending] = useActionState(
     signInWithGoogle,
     initialState,
@@ -57,6 +61,7 @@ export function LoginForm({ initialError }: LoginFormProps): ReactElement {
           action={googleAction}
           onSubmit={() => handleSignInStart("google")}
         >
+          <input type="hidden" name="next" value={nextPath} />
           <button
             type="submit"
             disabled={isPending}
@@ -77,6 +82,7 @@ export function LoginForm({ initialError }: LoginFormProps): ReactElement {
           action={githubAction}
           onSubmit={() => handleSignInStart("github")}
         >
+          <input type="hidden" name="next" value={nextPath} />
           <button
             type="submit"
             disabled={isPending}
