@@ -6,29 +6,29 @@ import { redirect } from "next/navigation";
 import {
   OAUTH_CODE_VERIFIER_COOKIE,
   OAUTH_CODE_VERIFIER_MAX_AGE_SECONDS,
+  OAUTH_NEXT_PATH_COOKIE,
   type OAuthActionState,
 } from "@/lib/auth-constants";
+import { getSafeAuthRedirectPath } from "@/lib/auth-redirects";
 
 type AuthProvider = "google" | "github";
 
 export async function signInWithGoogle(
   _prevState: OAuthActionState,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<OAuthActionState> {
   void _prevState;
-  void _formData;
 
-  return startOAuth("google");
+  return startOAuth("google", getNextPath(formData));
 }
 
 export async function signInWithGitHub(
   _prevState: OAuthActionState,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<OAuthActionState> {
   void _prevState;
-  void _formData;
 
-  return startOAuth("github");
+  return startOAuth("github", getNextPath(formData));
 }
 
 export async function signOut(): Promise<void> {
@@ -50,7 +50,10 @@ export async function signOut(): Promise<void> {
   redirect("/login");
 }
 
-async function startOAuth(provider: AuthProvider): Promise<OAuthActionState> {
+async function startOAuth(
+  provider: AuthProvider,
+  nextPath: string,
+): Promise<OAuthActionState> {
   let redirectUrl: string | null = null;
 
   try {
@@ -80,6 +83,13 @@ async function startOAuth(provider: AuthProvider): Promise<OAuthActionState> {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
     });
+    cookieStore.set(OAUTH_NEXT_PATH_COOKIE, nextPath, {
+      httpOnly: true,
+      maxAge: OAUTH_CODE_VERIFIER_MAX_AGE_SECONDS,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
 
     redirectUrl = data.url;
   } catch (error) {
@@ -96,6 +106,14 @@ async function startOAuth(provider: AuthProvider): Promise<OAuthActionState> {
   }
 
   redirect(redirectUrl);
+}
+
+function getNextPath(formData: FormData): string {
+  const nextValue = formData.get("next");
+
+  return getSafeAuthRedirectPath(
+    typeof nextValue === "string" ? nextValue : null,
+  );
 }
 
 async function getRequestOrigin(): Promise<string> {
